@@ -5,8 +5,11 @@ Adds an applet for Ubuntu Budgie to allow easy switching from HDMI audio output 
 This applet will only have any effect on a Raspberry Pi.
 
 To install:
+
    chmod +x install.sh
+
    ./install.sh
+   
    
 This copies the files to /usr/lib/budgie-desktop/plugins/budgie-pi-audio-switcher/
 
