@@ -51,33 +51,36 @@ class BudgiePiAudioSettings(Gtk.Grid):
     def __init__(self, setting):
         super().__init__()
         
-        button1 = Gtk.RadioButton(label="Remember Last Setting")
-        button1.connect("toggled", self.toggled_cb)
-        button2 = Gtk.RadioButton.new_from_widget(button1)
-        button2.set_label("Always Start With HDMI Output")
-        button2.connect("toggled", self.toggled_cb)
-        button2.set_active(False)
-        button3 = Gtk.RadioButton.new_with_label_from_widget(
-            button1, "Always Start With 3.5mm Output")
-        button3.connect("toggled", self.toggled_cb)
-        button3.set_active(False)
+        button_last = Gtk.RadioButton(label="Remember Last Setting")
+        button_last.connect("toggled", self.toggled_cb)
+        button_hdmi = Gtk.RadioButton.new_from_widget(button_last)
+        button_hdmi.set_label("Always Start With HDMI Output")
+        button_hdmi.connect("toggled", self.toggled_cb)
+        button_hdmi.set_active(False)
+        button_jack = Gtk.RadioButton.new_with_label_from_widget(
+            button_last, "Always Start With 3.5mm Output")
+        button_jack.connect("toggled", self.toggled_cb)
+        button_jack.set_active(False)
 
         self.config_path = os.getenv("HOME")+'/.config/piaudioswitcher.ini'
         self.config = SafeConfigParser()
         self.config.read(self.config_path)
         self.forcemode = self.config.get('Default','Force')
         if self.forcemode == 'Last':
-            button1.set_active(True)
+            button_last.set_active(True)
         elif self.forcemode == 'HDMI':
-            button2.set_active(True)
+            button_hdmi.set_active(True)
         else:
-            button3.set_active(True)
+            button_jack.set_active(True)
 
-        grid = Gtk.Grid.new()
-        self.attach(button1, 0, 0, 1, 1)
-        self.attach(button2, 0, 1, 1, 1)
-        self.attach(button3, 0, 2, 1, 1)
-        self.add(grid)
+        blank = Gtk.Label(" ")
+        
+        self.set_row_spacing (10)
+        self.attach(blank, 0, 0, 1, 1)
+        self.attach(button_last, 0, 1, 1, 1)
+        self.attach(button_hdmi, 0, 2, 1, 1)
+        self.attach(button_jack, 0, 3, 1, 1)
+        self.show_all()
 
     
     def toggled_cb(self, button):
@@ -90,7 +93,7 @@ class BudgiePiAudioSettings(Gtk.Grid):
                 forcesetting = 'HDMI'
             else:
                 forcesetting = 'JACK'
-  
+                
             self.config.set('Default','Force',forcesetting)
             with open(self.config_path, 'w') as f:
                 self.config.write(f)
@@ -196,18 +199,19 @@ class BudgiePiAudioApplet(Budgie.Applet):
         
     
     def on_press(self, box, arg):
+    
         self.box.remove(self.displayicon)
-        
+        self.config.read(self.config_path)
+        self.forcemode = self.config.get('Default','Force')
 
         if self.audiomode == 'HDMI':
             self.displayicon = self.jackicon
             self.audiomode = 'JACK'
-            os.system("amixer cset numid=3 1 >> /dev/null")
+            os.system("amixer cset numid=3 1")
         else:
             self.displayicon = self.hdmiicon
             self.audiomode = 'HDMI'
-            os.system("amixer cset numid=3 2 >> /dev/null")
-        
+            os.system("amixer cset numid=3 2")
         self.config.set('Default','Output',self.audiomode)
         with open(self.config_path, 'w') as f:
             self.config.write(f)
