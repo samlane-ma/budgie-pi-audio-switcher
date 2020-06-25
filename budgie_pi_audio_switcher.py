@@ -25,6 +25,71 @@ import os.path
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+def load_settings(config_file):
+
+    # Load the settings from the config file.
+    # If the config file does not exist, create it.
+    # If the config file has invalid data, reset it.
+    
+    need_new = False
+    
+    if not os.path.isfile(config_file):
+        need_new = True
+    config = SafeConfigParser()
+    config.read(config_file)
+    if not config.has_option('Default','Output'):
+        need_new = True
+    if not config.has_option('Default','Force'):
+        need_new = True
+        
+    if need_new:
+        create_settings(config_file)
+        need_new = False
+    config.read(config_file)
+    
+    read_last = config.get('Default','Output')
+    read_forced = config.get('Default','Force')
+    if not read_last in ['HDMI','JACK']:
+        need_new = True
+    if not read_forced in ['HDMI','JACK','LAST']:
+        need_new = True
+    if need_new:
+        create_settings(config_file)
+
+    config.read(config_file)
+    read_last = config.get('Default','Output')
+    read_forced = config.get('Default','Force')       
+
+    return read_last, read_forced
+
+
+def save_settings(save_mode, save_forced, config_file):
+
+    # saves the settings to the config file
+
+    config = SafeConfigParser()
+    config.read(config_file)
+    config.set('Default','Output', save_mode)
+    config.set('Default','Force',save_forced)
+    with open(config_file, 'w') as f:
+        config.write (f)
+        
+    
+def create_settings(config_file):
+    
+    # Deletes the config file if it exists, and creates a new one
+    # using default values.  Called when file is missing or invalid.
+
+    if os.path.isfile(config_file):
+        os.remove(config_file)
+    config = SafeConfigParser()
+    config.read(config_file)
+    config.add_section('Default')
+    config.set('Default','Output','HDMI')
+    config.set('Default','Force','LAST')
+    with open(config_file, 'w') as f:
+        config.write (f)
+
 
 
 class BudgiePiAudio(GObject.GObject, Budgie.Plugin):
@@ -63,10 +128,9 @@ class BudgiePiAudioSettings(Gtk.Grid):
         button_jack.set_active(False)
 
         self.config_path = os.getenv("HOME")+'/.config/piaudioswitcher.ini'
-        self.config = SafeConfigParser()
-        self.config.read(self.config_path)
-        self.forcemode = self.config.get('Default','Force')
-        if self.forcemode == 'Last':
+        self.audiomode, self.forcemode = load_settings(self.config_path)
+        
+        if self.forcemode == 'LAST':
             button_last.set_active(True)
         elif self.forcemode == 'HDMI':
             button_hdmi.set_active(True)
@@ -88,15 +152,13 @@ class BudgiePiAudioSettings(Gtk.Grid):
         if button.get_active():
             switchtomode = button.get_label()
             if switchtomode == 'Remember Last Setting':
-                forcesetting = 'Last'
+                forcesetting = 'LAST'
             elif switchtomode == 'Always Start With HDMI Output':
                 forcesetting = 'HDMI'
             else:
                 forcesetting = 'JACK'
-                
-            self.config.set('Default','Force',forcesetting)
-            with open(self.config_path, 'w') as f:
-                self.config.write(f)
+            
+            save_settings(self.audiomode, forcesetting, self.config_path)  
         # else do nothing
         
 
@@ -116,6 +178,8 @@ class BudgiePiAudioApplet(Budgie.Applet):
         self.config_path = os.getenv("HOME")+'/.config/piaudioswitcher.ini'
         self.config = SafeConfigParser()
         
+        self.audiomode, self.forcemode = load_settings(self.config_path)
+        
         self.box = Gtk.EventBox()
       
         self.hdmiicon = Gtk.Image.new_from_icon_name(
@@ -127,68 +191,17 @@ class BudgiePiAudioApplet(Budgie.Applet):
             "audio-headphones-symbolic",
             Gtk.IconSize.MENU,
         )
- 
-        if os.path.isfile(self.config_path):
-            #File Found
-            self.config.read(self.config_path)
-            if not self.config.has_option('Default','Output'):
-                # The key doesn't exist
-                if not self.config.has_section('Default'):
-                    # Section Not Found - Create it and add the key
-                    self.config.add_section('Default')
-                    self.config.set('Default','Output','HDMI')
-                    self.config.set('Default','Force','Last')
-                    with open(self.config_path, 'w') as f:
-                        self.config.write (f)
-                else:
-                    # Section Exists - Just Create the Key
-                    self.config.set('Default','Output','HDMI')
-                    with open(self.config_path, 'w') as f:
-                        self.config.write (f)
-        else:
-            # File Doesn't exist - Create it
-            self.config.read(self.config_path)
-            self.config.add_section('Default')
-            self.config.set('Default','Output','HDMI')
-            self.config.set('Default','Force','Last')
-            with open(self.config_path, 'w') as f:
-                self.config.write (f)
-                
-        self.config.read(self.config_path)
-        if not self.config.has_option('Default','Force'):
-            self.config.set('Default','Force','Last')
-            with open(self.config_path, 'w') as f:
-                self.config.write (f)
-        
-        self.config.read(self.config_path)
-        
-        self.forcemode = self.config.get('Default','Force')
-        if not self.forcemode in ['HDMI','JACK','Last']:
-           self.forcemode = 'Last'
-           self.config.set('Default','Force','Last')
-           with open(self.config_path, 'w') as f:
-               self.config.write(f)
-               
-        if self.forcemode in ['HDMI','JACK']:
-            self.config.set('Default','Output',self.forcemode)
-            with open(self.config_path, 'w') as f:
-                self.config.write(f)
-        
-        self.audiomode = self.config.get('Default','Output')
-        if not self.audiomode in ['HDMI','JACK']:
-            self.audiomode = 'HDMI'
-            self.config.set('Default','Output','HDMI')
-            with open(self.config_path, 'w') as f:
-                self.config.write(f)
-        
-        if not self.forcemode == 'Last':
+         
+        if not self.forcemode == 'LAST':
             self.audiomode = self.forcemode
            
         if self.audiomode == 'JACK':
             self.displayicon = self.jackicon
+            self.box.set_tooltip_text('Audio output set to 3.5mm jack')
             os.system("amixer cset numid=3 1 >> /dev/null")
         else:
             self.displayicon = self.hdmiicon
+            self.box.set_tooltip_text('Audio output set to HDMI')
             os.system("amixer cset numid=3 2 >> /dev/null")
 
         self.box.add(self.displayicon)
@@ -207,14 +220,15 @@ class BudgiePiAudioApplet(Budgie.Applet):
         if self.audiomode == 'HDMI':
             self.displayicon = self.jackicon
             self.audiomode = 'JACK'
+            self.box.set_tooltip_text('Audio output currently set to 3.5mm jack')
             os.system("amixer cset numid=3 1")
         else:
             self.displayicon = self.hdmiicon
             self.audiomode = 'HDMI'
+            self.box.set_tooltip_text('Audio output currently set to HDMI')
             os.system("amixer cset numid=3 2")
-        self.config.set('Default','Output',self.audiomode)
-        with open(self.config_path, 'w') as f:
-            self.config.write(f)
+        
+        save_settings(self.audiomode, self.forcemode, self.config_path)
             
         self.box.add(self.displayicon)
         self.box.show_all()
