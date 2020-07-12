@@ -15,3 +15,5 @@ This copies the files to /usr/lib/budgie-desktop/plugins/budgie-pi-audio-switche
 
 To use, simply click the icon to switch modes.
 The plugin can be configured to start up in HDMI mode, 3.5mm jack mode, or the last mode used.
+
+![image](https://user-images.githubusercontent.com/67085765/87239279-5c2e1700-c3db-11ea-8a68-59dd38561117.png)
