@@ -6,12 +6,14 @@ This applet will only have the correct effect on a Raspberry Pi.
 
 To install:
 
-   chmod +x install.sh
-
-   ./install.sh
+- chmod +x install.sh
+- ./install.sh
    
    
-This copies the files to /usr/lib/budgie-desktop/plugins/budgie-pi-audio-switcher/
+This will
+- copy the plugin files to /usr/lib/budgie-desktop/plugins/budgie-pi-audio-switcher/
+- copy the icons to /usr/share/pixmaps
+- install the schema
 
 To use, simply click the icon to switch modes.
 The plugin can be configured to start up in HDMI mode, 3.5mm jack mode, or the last mode used.
