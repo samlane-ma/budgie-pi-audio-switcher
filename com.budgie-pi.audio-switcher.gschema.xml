@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/com/budgie-pi/audio-switcher/" 
+              id="com.budgie-pi.audio-switcher">
+        <key name="startup-mode" type="s">
+            <summary>Startup Mode</summary>
+            <description>
+                Choose if audio output is set to HDMI, JACK, or LAST mode used on startup
+            </description>
+            <default>"LAST"</default>
+        </key>
+        <key name="current-mode" type="s">
+            <summary>Current Audio Mode</summary>
+            <description>
+                The currently selected audio mode
+            </description>
+            <default>"HDMI"</default>
+        </key>
+    </schema> 
+</schemalist>
