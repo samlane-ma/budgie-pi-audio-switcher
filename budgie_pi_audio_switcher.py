@@ -128,11 +128,11 @@ class BudgiePiAudioApplet(Budgie.Applet):
         if self.audiomode == 'JACK':
             self.displayicon = self.jackicon
             self.box.set_tooltip_text('Audio output set to 3.5mm jack')
-            os.system("amixer cset numid=3 1 >> /dev/null")
+            os.system("amixer cset numid=3 1")
         else:
             self.displayicon = self.hdmiicon
             self.box.set_tooltip_text('Audio output set to HDMI')
-            os.system("amixer cset numid=3 2 >> /dev/null")
+            os.system("amixer cset numid=3 2")
         self.box.add(self.displayicon)
         self.add(self.box)
         self.box.show_all()
